@@ -54,12 +54,12 @@ void loop() {
       String mac = getValue(playerInfo,' ',0);
 
       if(mac == WiFi.macAddress())
-      {
-        playerNumber = getValue(playerInfo,' ',1).toInt();
-        teamNumber = getValue(playerInfo,' ',2).toInt();  
-        connected = true;
-        timerAlarmDisable(Lora_Timer);
-      }
+        {
+          playerNumber = getValue(playerInfo,' ',1).toInt();
+          teamNumber = getValue(playerInfo,' ',2).toInt();  
+          connected = true;
+          timerAlarmDisable(Lora_Timer);
+        }
       }
     }
   }
