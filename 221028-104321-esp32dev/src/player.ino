@@ -24,7 +24,7 @@ bool hit = false;
 bool loraHit = false;
 bool masterHit = false;
 // trigger button pin
-int triggerPin = 5;
+int triggerPin = 35;
 // IR receiver pin
 const uint16_t  IRpin = 15;
 // IR receiver object
