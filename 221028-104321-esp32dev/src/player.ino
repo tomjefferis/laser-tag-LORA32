@@ -24,16 +24,26 @@ bool hit = false;
 bool loraHit = false;
 bool masterHit = false;
 // trigger button pin
-int triggerPin = 35;
+#define triggerPin = 33;
 // IR receiver pin
-const uint16_t  IRpin = 15;
+#define IRpin = 32;
 // IR receiver object
 IRrecv irrecv(IRpin);
 // IR emitter pin
-const uint16_t  IRemitterPin = 4;
+#define IRemitterPin = 4;
 // IR emitter object
 IRsend irsend(IRemitterPin);
 // setup for led strip
+#define PixelCount = 6; // this example assumes 4 pixels, making it smaller will cause a failure
+#define PixelPin = 23;  // make sure to set this to the correct pin, ignored for Esp8266
+#define colorSaturation 128 // 0 to 255, 128 is half bright
+NeoPixelBus<NeoGrbFeature, NeoEsp8266Uart1800KbpsMethod> strip(PixelCount, PixelPin);
+
+//color setup
+RgbColor red = RgbColor(colorSaturation, 0, 0);
+RgbColor green = RgbColor(0, colorSaturation, 0);
+RgbColor blue = RgbColor(0, 0, colorSaturation);
+RgbColor orange = RgbColor(colorSaturation, colorSaturation / 2, 0);
 
 // ISR for pinging Lora server to connect
 void IRAM_ATTR loraTimer()
@@ -92,6 +102,15 @@ void setup()
   // sync word to only take commands from server
   LoRa.setSyncWord(0xF3);
   // connects to server with wifi mac
+  // set rgb ro red
+  strip.Begin();
+  // for all pixels set orange
+  for (int i = 0; i < PixelCount; i++)
+  {
+    strip.SetPixelColor(i, orange);
+  }
+  // show pixels 
+  strip.Show();
   // attach timer interrupt
   Lora_Timer = timerBegin(0, 80, true);
   timerAttachInterrupt(Lora_Timer, &loraTimer, true);
@@ -149,6 +168,13 @@ void onLoraReceive(int packetSize)
           if (hit && loraHit)
           {
             masterHit = true;
+            // for all pixels set red
+            for (int i = 0; i < PixelCount; i++)
+            {
+              strip.SetPixelColor(i, red);
+            }
+            // show pixels
+            strip.Show();
             //enable hit timer
             timerAlarmEnable(Hit_Timer);
           }
@@ -173,6 +199,13 @@ void loraConnect(String playerInfo)
   teamNumber = getValue(playerInfo, ' ', 2).toInt();
   connected = true;
   timerAlarmDisable(Lora_Timer);
+  // for all pixels set green
+  for (int i = 0; i < PixelCount; i++)
+  {
+    strip.SetPixelColor(i, green);
+  }
+  // show pixels
+  strip.Show();
 }
 
 void startGame()
