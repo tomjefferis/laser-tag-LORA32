@@ -4,7 +4,7 @@
 #include <LoRa.h>
 #include <SPI.h>
 #include <WiFi.h>
-#include <NeoPixelBus.h>
+#include <FastLED.h>
 
 // LoRa Pins
 #define ss 5
@@ -24,26 +24,21 @@ bool hit = false;
 bool loraHit = false;
 bool masterHit = false;
 // trigger button pin
-#define triggerPin = 33;
+const int triggerPin = 33;
 // IR receiver pin
-#define IRpin = 32;
+const int  IRpin = 32;
 // IR receiver object
 IRrecv irrecv(IRpin);
 // IR emitter pin
-#define IRemitterPin = 4;
+const int  IRemitterPin = 4;
 // IR emitter object
 IRsend irsend(IRemitterPin);
 // setup for led strip
-#define PixelCount = 6; // this example assumes 4 pixels, making it smaller will cause a failure
-#define PixelPin = 23;  // make sure to set this to the correct pin, ignored for Esp8266
-#define colorSaturation 128 // 0 to 255, 128 is half bright
-NeoPixelBus<NeoGrbFeature, NeoEsp8266Uart1800KbpsMethod> strip(PixelCount, PixelPin);
+#define NUM_LEDS 6
+#define DATA_PIN 23
+CRGB leds[NUM_LEDS];
 
-//color setup
-RgbColor red = RgbColor(colorSaturation, 0, 0);
-RgbColor green = RgbColor(0, colorSaturation, 0);
-RgbColor blue = RgbColor(0, 0, colorSaturation);
-RgbColor orange = RgbColor(colorSaturation, colorSaturation / 2, 0);
+
 
 // ISR for pinging Lora server to connect
 void IRAM_ATTR loraTimer()
@@ -102,15 +97,13 @@ void setup()
   // sync word to only take commands from server
   LoRa.setSyncWord(0xF3);
   // connects to server with wifi mac
-  // set rgb ro red
-  strip.Begin();
-  // for all pixels set orange
-  for (int i = 0; i < PixelCount; i++)
+  // setup led
+  FastLED.addLeds<WS2812B, DATA_PIN, GRB>(leds, NUM_LEDS);
+  // set all leds to orange
+  for(int i = 0; i < NUM_LEDS; i++)
   {
-    strip.SetPixelColor(i, orange);
+    leds[i] = CRGB::Orange;
   }
-  // show pixels 
-  strip.Show();
   // attach timer interrupt
   Lora_Timer = timerBegin(0, 80, true);
   timerAttachInterrupt(Lora_Timer, &loraTimer, true);
@@ -169,13 +162,10 @@ void onLoraReceive(int packetSize)
           {
             masterHit = true;
             // for all pixels set red
-            for (int i = 0; i < PixelCount; i++)
+            for(int i = 0; i < NUM_LEDS; i++)
             {
-              strip.SetPixelColor(i, red);
+              leds[i] = CRGB::Red;
             }
-            // show pixels
-            strip.Show();
-            //enable hit timer
             timerAlarmEnable(Hit_Timer);
           }
         }
@@ -200,12 +190,10 @@ void loraConnect(String playerInfo)
   connected = true;
   timerAlarmDisable(Lora_Timer);
   // for all pixels set green
-  for (int i = 0; i < PixelCount; i++)
+  for(int i = 0; i < NUM_LEDS; i++)
   {
-    strip.SetPixelColor(i, green);
+    leds[i] = CRGB::Green;
   }
-  // show pixels
-  strip.Show();
 }
 
 void startGame()
