@@ -8,7 +8,7 @@
 #define dio0 2
 
 // on receive callback
-void onReceive(int packetSize) {
+void onLoraReceive(int packetSize) {
   // if there is data available
   if (packetSize) {
     // read packet
@@ -28,6 +28,7 @@ void setup() {
   LoRa.begin(866E6);
   LoRa.setSyncWord(0xF3);
   LoRa.onReceive(onLoraReceive);
+  Serial.println("LoRa Connected!");
 }
 
 void loop() {
@@ -43,5 +44,3 @@ void loop() {
     LoRa.receive();
 	}
 }
-
-

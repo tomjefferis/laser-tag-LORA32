@@ -1,15 +1,19 @@
+#include <Adafruit_NeoPixel.h>
 #include <IRremoteESP8266.h>
 #include <IRsend.h>
 #include <IRrecv.h>
 #include <LoRa.h>
 #include <SPI.h>
 #include <WiFi.h>
-#include <FastLED.h>
+
 
 // LoRa Pins
-#define ss 5
-#define rst 14
-#define dio0 2
+#define SCK 5
+#define MISO 19
+#define MOSI 27
+#define SS 18
+#define RST 14
+#define DIO0 26
 // player connected to server
 bool connected = false;
 // number and team of player
@@ -34,20 +38,17 @@ const int  IRemitterPin = 4;
 // IR emitter object
 IRsend irsend(IRemitterPin);
 // setup for led strip
-#define NUM_LEDS 6
-#define DATA_PIN 23
-CRGB leds[NUM_LEDS];
-
-
+#define PIN        23
+#define NUMPIXELS 6
+TaskHandle_t LEDTask;
+Adafruit_NeoPixel pixels(NUMPIXELS, PIN, NEO_GRB + NEO_KHZ800);
+long lastSendTime = 0;        // last send time
+int interval = 2000;          // interval between sends
 
 // ISR for pinging Lora server to connect
 void IRAM_ATTR loraTimer()
 {
-  LoRa.beginPacket();
-  LoRa.print(WiFi.macAddress());
-  LoRa.endPacket();
-  // put the radio into receive mode
-  LoRa.receive();
+  LoRaConnectPacket();
 }
 
 // ISR for shooting IR signal when trigger is pressed
@@ -91,24 +92,32 @@ void setup()
   // initilize serial
   Serial.begin(115200);
   // initilize LoRa and IR
-  LoRa.setPins(ss, rst, dio0);
+  SPI.begin(SCK, MISO, MOSI, SS);
+  //setup LoRa transceiver module
+  LoRa.setPins(SS, RST, DIO0);
   // european lora
   LoRa.begin(866E6);
   // sync word to only take commands from server
   LoRa.setSyncWord(0xF3);
   // connects to server with wifi mac
   // setup led
-  FastLED.addLeds<WS2812B, DATA_PIN, GRB>(leds, NUM_LEDS);
+
+ xTaskCreatePinnedToCore(
+                    LEDTaskloop,   /* Task function. */
+                    "LEDTask",     /* name of task. */
+                    10000,       /* Stack size of task */
+                    NULL,        /* parameter of the task */
+                    1,           /* priority of the task */
+                    &LEDTask,      /* Task handle to keep track of created task */
+                    0);
   // set all leds to orange
-  for(int i = 0; i < NUM_LEDS; i++)
-  {
-    leds[i] = CRGB::Orange;
-  }
+  
+  //print led set orange
   // attach timer interrupt
-  Lora_Timer = timerBegin(0, 80, true);
-  timerAttachInterrupt(Lora_Timer, &loraTimer, true);
-  timerAlarmWrite(Lora_Timer, 10000000, true);
-  timerAlarmEnable(Lora_Timer);
+  //Lora_Timer = timerBegin(0, 80, true);
+  //timerAttachInterrupt(Lora_Timer, &loraTimer, true);
+  //timerAlarmWrite(Lora_Timer, 10000000, true);
+  //timerAlarmEnable(Lora_Timer);
   // attach hit timer interrupt
   Hit_Timer = timerBegin(1, 80, true);
   timerAttachInterrupt(Hit_Timer, &resetHit, true);
@@ -119,6 +128,42 @@ void setup()
 
 void loop()
 {
+  if(!connected && millis() - lastSendTime > interval)
+  {
+    LoRaConnectPacket();
+    lastSendTime = millis();
+  }
+}
+
+void LEDTaskloop(void * pvParameters)
+{
+  //pixels.begin();
+
+  while(1)
+  {
+    //if(!connected)
+    //{
+      //for(int i=0; i<NUMPIXELS; i++) {
+
+    //pixels.setPixelColor(i, pixels.Color(150, 150, 0));
+    //pixels.show();
+ // }
+  
+  Serial.println("leds set orange");
+  delay(10000);
+    //}
+  }
+}
+
+void LoRaConnectPacket()
+{
+  //serial print lora packet
+  LoRa.beginPacket();
+  LoRa.print(WiFi.macAddress());
+  LoRa.endPacket();
+  Serial.println("LoRa Connect Packet");
+  // put the radio into receive mode
+  LoRa.receive();
 }
 
 void onLoraReceive(int packetSize)
@@ -162,10 +207,8 @@ void onLoraReceive(int packetSize)
           {
             masterHit = true;
             // for all pixels set red
-            for(int i = 0; i < NUM_LEDS; i++)
-            {
-              leds[i] = CRGB::Red;
-            }
+            
+
             timerAlarmEnable(Hit_Timer);
           }
         }
@@ -190,10 +233,8 @@ void loraConnect(String playerInfo)
   connected = true;
   timerAlarmDisable(Lora_Timer);
   // for all pixels set green
-  for(int i = 0; i < NUM_LEDS; i++)
-  {
-    leds[i] = CRGB::Green;
-  }
+  
+  
 }
 
 void startGame()
