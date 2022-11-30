@@ -45,10 +45,10 @@ long lastSendTime = 0;        // last send time
 int interval = 2000;          // interval between sends
 
 // ISR for pinging Lora server to connect
-void IRAM_ATTR loraTimer()
-{
-  LoRaConnectPacket();
-}
+// void IRAM_ATTR loraTimer()
+// {
+//   LoRaConnectPacket();
+// }
 
 // ISR for shooting IR signal when trigger is pressed
 void IRAM_ATTR triggerISR()
@@ -110,10 +110,10 @@ void setup()
   //print led set orange
   Serial.println("LED set to orange");
   // attach timer interrupt
-  Lora_Timer = timerBegin(0, 80, true);
-  timerAttachInterrupt(Lora_Timer, &loraTimer, true);
-  timerAlarmWrite(Lora_Timer, 50000000, true);
-  timerAlarmEnable(Lora_Timer);
+  //Lora_Timer = timerBegin(0, 80, true);
+  // timerAttachInterrupt(Lora_Timer, &loraTimer, true);
+  // timerAlarmWrite(Lora_Timer, 50000000, true);
+  // timerAlarmEnable(Lora_Timer);
   // attach hit timer interrupt
   Hit_Timer = timerBegin(1, 80, true);
   timerAttachInterrupt(Hit_Timer, &resetHit, true);
