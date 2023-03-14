@@ -39,7 +39,7 @@ IRsend irsend(IRemitterPin);
 // setup for 4 pin rgb led 
 const int redPin = 13;
 const int greenPin = 2;
-const int bluePin = 35;
+const int bluePin = 21;
 
 long lastSendTime = 0;        // last send time
 int interval = 2000;          // interval between sends
@@ -124,7 +124,7 @@ void setup()
 
 void loop()
 {
-  if(!connected && millis() - lastSendTime > interval)
+  if(millis() - lastSendTime > interval)
   {
     LoRaConnectPacket();
     lastSendTime = millis();
